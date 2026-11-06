@@ -1,38 +1,17 @@
-"""训练脚本。
-
-运行：python train.py
-
-做了这几件事：
-  1. 准备数据（没有数据就自动生成演示数据）
-  2. 建模型、损失函数、优化器
-  3. 一轮一轮训练，每轮在验证集上算 Dice
-  4. 把验证集上表现最好的模型存到 model/best.pt
-"""
-
-# Windows 上偶尔会出现 "OMP: Error #15" 的报错，加这一行可以避开
 import os
-os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
-
 import random
 import time
-
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-
 import config
 from unet import UNet
 from dataset import SegDataset
 
 
 def dice_loss(logits, masks, eps=1e-6):
-    """Dice 损失 = 1 - Dice 系数。
 
-    Dice 系数衡量"预测区域"和"真实区域"重合了多少，越接近 1 越好。
-    对分割任务来说，它比单纯的逐像素交叉熵更关心目标本身，
-    所以这里用 BCE + Dice 两个损失加起来。
-    """
     probs = torch.sigmoid(logits)                      # 把分数变成 0~1 的概率
     inter = (probs * masks).sum(dim=(1, 2, 3))         # 预测和真实重叠的面积
     union = probs.sum(dim=(1, 2, 3)) + masks.sum(dim=(1, 2, 3))
@@ -54,7 +33,6 @@ def main():
     train_mask_dir = os.path.join(config.DATA_DIR, "train", "masks")
     val_image_dir = os.path.join(config.DATA_DIR, "val", "images")
     val_mask_dir = os.path.join(config.DATA_DIR, "val", "masks")
-
 
 
     train_dataset = SegDataset(train_image_dir, train_mask_dir, config.IMAGE_SIZE, augment=True)
@@ -109,7 +87,7 @@ def main():
         inter_sum = 0.0
         pred_sum = 0.0
         mask_sum = 0.0
-        with torch.no_grad():                          # 验证不需要算梯度
+        with torch.no_grad():
             for images, masks in val_loader:
                 images = images.to(device)
                 masks = masks.to(device)
@@ -146,7 +124,7 @@ def main():
                 },
                 save_path,
             )
-            print("  -> 新的最好成绩，模型已保存到 " + save_path)
+            print("新的最好成绩，模型已保存到 " + save_path)
 
     # ---------------- 4. 收尾 ----------------
     print("训练结束，最好的一次验证 Dice = %.4f" % best_dice)

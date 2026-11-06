@@ -1,31 +1,11 @@
-"""数据部分：读取图片 + 对应的掩码，做成 PyTorch 能用的 Dataset。
-
-约定一种最简单的文件夹结构（也是分割项目里最常见的）：
-
-    data/
-      train/
-        images/  0001.png  0002.png ...
-        masks/   0001.png  0002.png ...   <- 文件名和原图一模一样
-      val/
-        images/  ...
-        masks/   ...
-
-掩码图（mask）是黑底白图：白 = 要分割的目标（前景），黑 = 背景。
-"""
-
 import os
 import random
-
 import numpy as np
 from PIL import Image, ImageDraw
 import torch
 from torch.utils.data import Dataset
 
-import config
-
-
 class SegDataset(Dataset):
-    """读取 images/ 和 masks/ 两个文件夹，返回 (图片张量, 掩码张量)。"""
 
     def __init__(self, image_dir, mask_dir, image_size=128, augment=False):
         self.image_dir = image_dir
